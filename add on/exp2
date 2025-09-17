@@ -1,0 +1,57 @@
+from keras.datasets import mnist
+from keras.models import Sequential
+from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+from keras.utils import to_categorical
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
+(X_train, y_train), (X_test, y_test) = mnist.load_data()
+X_train = X_train.reshape(-1, 28, 28, 1).astype('float32') / 255
+X_test = X_test.reshape(-1, 28, 28, 1).astype('float32') / 255
+y_train_cat = to_categorical(y_train)
+y_test_cat = to_categorical(y_test)
+
+model = Sequential([
+    Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)),
+    MaxPooling2D(pool_size=(2, 2)),
+    Flatten(),
+    Dense(128, activation='relu'),
+    Dense(10, activation='softmax')
+])
+
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+history = model.fit(X_train, y_train_cat, epochs=5, batch_size=32, validation_data=(X_test, y_test_cat))
+
+loss, acc = model.evaluate(X_test, y_test_cat, verbose=0)
+print("Test Accuracy on MNIST:", round(acc*100, 2), "%")
+
+y_pred = model.predict(X_test).argmax(axis=1)
+cm = confusion_matrix(y_test, y_pred)
+
+plt.figure(figsize=(8,6))
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
+plt.title("Confusion Matrix - MNIST")
+plt.xlabel("Predicted")
+plt.ylabel("True")
+plt.show()
+
+print("Test Case Verification:")
+test_indices = [0, 1, 2, 3]
+for idx in test_indices:
+    plt.imshow(X_test[idx].reshape(28,28), cmap="gray")
+    plt.title(f"True: {y_test[idx]}, Predicted: {y_pred[idx]}")
+    plt.axis("off")
+    plt.show()
+    
+output:
+
+Downloading data from https://storage.googleapis.com/tensorflow/tf-keras-datasets/mnist.npz
+11490434/11490434 ━━━━━━━━━━━━━━━━━━━━ 1s 0us/step
+/usr/local/lib/python3.12/dist-packages/keras/src/layers/convolutional/base_conv.py:113: UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead.
+  super().__init__(activity_regularizer=activity_regularizer, **kwargs)
+Epoch 1/5
+1875/1875 ━━━━━━━━━━━━━━━━━━━━ 42s 22ms/step - accuracy: 0.9091 - loss: 0.3062 - val_accuracy: 0.9784 - val_loss: 0.0692
+Epoch 2/5
+1875/1875 ━━━━━━━━━━━━━━━━━━━━ 82s 22ms/step - accuracy: 0.9837 - loss: 0.0521 - val_accuracy: 0.9853 - val_loss: 0.0498
